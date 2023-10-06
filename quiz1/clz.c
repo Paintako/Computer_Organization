@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-uint16_t count_leading_zeros(uint64_t x)
+uint16_t clz(uint64_t x)
 {
     x |= (x >> 1);
     x |= (x >> 2);
