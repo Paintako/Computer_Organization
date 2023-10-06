@@ -1,2 +1,3 @@
 *.o
 /quiz1/.vscode
+.vscode/settings.json
