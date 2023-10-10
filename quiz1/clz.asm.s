@@ -79,3 +79,113 @@ clz:
     li t1, 32
     sub a0, t1, s0
     jr ra # return, can write as pseudocode 'ret'
+
+fmaxstr:
+    # a0: unsinged x
+    # a1: address of apos
+    mv s0, a0 # s0: x
+    li s1, 0 # s1: y
+    mv s2, a1 # s2: *apos
+    li s3, 0 # s3: s
+
+    bne x0, s0, skip_0
+    li t0, 32 # set t0 as 32
+    sw t0, 0(s2) # store t0 into apos
+    li a0, 0 # retrun 0
+    jr ra
+    skip_0:
+    
+    srli t0, s0, 1 # t0 = x << 1
+    and s1, s0, t0 # s1 = y, y = x & x << 1
+    
+    bne x0, s1 skip
+    li s3, 1 # s = 1
+    j L1
+    skip:
+    
+    srli t1, s1, 2 # t1 = y << 2
+    and s0, s1, t1 # x = y & y << 2
+    
+    bne x0, s0, skip_2
+    li s3, 2 # s = 2
+    mv s0, s1 # x = y
+    j L2
+    skip_2:
+    
+    srli t0, s0, 4 # t0 = x << 4
+    and s1, s0, t0 # t1 = y = x & (x << 4 )
+    
+    bne x0, s1, skip_4
+    li s3, 4 # s = 4
+    j L4
+    skip_4:
+        
+    srli t1, s1, 8 # y << 8 
+    and s0, s1, t1 # x = y & y << 8
+    
+    bne x0, s0, skip_8
+    li s3, 8 # s = 8
+    mv s0, s1 # x = y
+    j L8
+    skip_8:
+    
+    la t0, w5 
+    lw t0, 0(t0)
+    bne s0, t0, skip_16
+    lw x0, 0(x0) # *apos = 0
+    li a0, 32
+    jr ra # return 0
+    skip_16:
+        
+    L16:
+        srli t0, s0, 8 # x << 8
+        and s1, s0, t0 # t1 = y, y = x & x << 8
+        beq x0, t1, pass_16
+        addi s3, s3, 8
+        mv s0, t1
+    
+    pass_16:
+        
+    L8:
+        srli t0, s0, 4 # x << 4
+        and s1, s0, t0 # s1 = y, y = x & x << 4
+        beq x0, t1, pass_8
+        addi s2, s2, 4
+        mv s0, s1
+    pass_8:
+     
+        
+    L4:
+        # y = x & x << 2
+        srli t0, s0, 2 # x << 2
+        and s1, s0, t0  # s1 = y, y = x & x << 2
+        beq x0, t1, pass_4
+        addi s3, s3, 2
+        mv s0, s1
+    pass_4:
+        
+    L2:
+        srli t0, s0, 1 # x << 2
+        and s1, s0, t0  # t1 = y, y = x & x << 2
+        beq x0, s1, pass_2
+        addi s3, s3, 1
+        mv s0, s1
+    pass_2:
+        
+    L1:
+        # clz(x)
+        # put x into a0
+        addi a0, s0, 0
+        addi sp, sp, -12
+        sw ra, 0(sp) # store ra
+        sw s2, 4(sp)
+        sw s3, 8(sp)
+        jal clz
+        lw a0, 0(s2) # *apos = clz(x)
+        lw ra, 0(sp)
+        lw s2, 4(sp)
+        lw s3, 8(sp)
+        addi sp, sp, 12
+        
+    add a0, s3, x0 # return s
+    jr ra
